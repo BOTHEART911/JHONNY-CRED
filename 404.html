@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Credencial · Soy de Flandes</title>
+<!-- 404.html = copia de index.html. GitHub Pages sirve este archivo para
+     /JHONNY-CRED/JPXXXXXXXX ; el <base> mantiene css/js apuntando a /JHONNY-CRED/ -->
+<meta name="theme-color" content="#007BFF">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="Verificación de credencial.">
+<link rel="icon" href="https://res.cloudinary.com/dqqeavica/image/upload/v1753538807/JHONNY_PERDOMO_dn3dah.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+<base href="/JHONNY-CRED/">
+<link rel="stylesheet" href="cred.css">
+</head>
+<body>
+
+<main class="wrap">
+
+  <div class="card" id="card">
+
+    <div class="banner" id="banner" aria-hidden="true"></div>
+
+    <img class="logo" id="logo" alt="" src="https://res.cloudinary.com/dqqeavica/image/upload/v1753538807/JHONNY_PERDOMO_dn3dah.png">
+
+    <!-- CARGANDO -->
+    <section class="estado" id="vCargando">
+      <div class="sk sk-1"></div>
+      <div class="sk sk-2"></div>
+      <div class="sk sk-3"></div>
+    </section>
+
+    <!-- CREDENCIAL VÁLIDA -->
+    <section class="estado oculto" id="vOk">
+      <div class="sello" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="26" height="26"><path fill="currentColor" d="M9.6 16.6 4.8 11.8l1.4-1.4 3.4 3.4 8-8 1.4 1.4z"/></svg>
+      </div>
+      <p class="rotulo">Esta credencial pertenece a</p>
+      <h1 class="nombre" id="oNombre"></h1>
+      <p class="doc" id="oDoc"></p>
+      <div class="linea"></div>
+      <p class="iniciativa">Iniciativa de <strong id="oCandidato"></strong></p>
+    </section>
+
+    <!-- QR VÁLIDO PERO SIN ASIGNAR -->
+    <section class="estado oculto" id="vReserva">
+      <div class="sello aviso" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="26" height="26"><path fill="currentColor" d="M11 7h2v7h-2zm0 9h2v2h-2z"/></svg>
+      </div>
+      <h2 class="titulo">Credencial sin asignar</h2>
+      <p class="texto">Esta tarjeta es auténtica, pero todavía no tiene una persona registrada.</p>
+      <div class="linea"></div>
+      <p class="iniciativa">Iniciativa de <strong class="oCandidato"></strong></p>
+    </section>
+
+    <!-- NO EXISTE / ERROR -->
+    <section class="estado oculto" id="vNo">
+      <div class="sello malo" id="nSello" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="26" height="26"><path fill="currentColor" d="m12 10.6 4.9-4.9 1.4 1.4-4.9 4.9 4.9 4.9-1.4 1.4-4.9-4.9-4.9 4.9-1.4-1.4 4.9-4.9-4.9-4.9 1.4-1.4z"/></svg>
+      </div>
+      <h2 class="titulo" id="nTitulo">Credencial no válida</h2>
+      <p class="texto" id="nTexto">No pudimos verificar esta tarjeta.</p>
+      <button class="btn ghost oculto" id="nReintentar" type="button">Reintentar</button>
+      <div class="linea"></div>
+      <p class="iniciativa">Iniciativa de <strong class="oCandidato"></strong></p>
+    </section>
+
+    <!-- CLAVE DEL EQUIPO (la credencial es pública; el escáner no) -->
+    <section class="estado oculto" id="vClave">
+      <div class="sello aviso" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="26" height="26"><path fill="currentColor" d="M17 9h-1V7a4 4 0 1 0-8 0v2H7a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1m-7-2a2 2 0 1 1 4 0v2h-4zm2 10a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3"/></svg>
+      </div>
+      <h2 class="titulo">Zona del equipo</h2>
+      <p class="texto">Revisar tarjetas una tras otra es una función del equipo de <strong class="oCandidato"></strong>. Ingresa la clave para continuar.</p>
+      <input class="campo" id="clInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Clave del equipo" aria-label="Clave del equipo">
+      <p class="aviso-err oculto" id="clErr"></p>
+      <button class="btn" id="clEntrar" type="button">Entrar</button>
+      <p class="nota">Con esto tu celular queda habilitado; no habrá que teclearla cada vez.</p>
+    </section>
+
+    <!-- ESCÁNER EN LA PROPIA PÁGINA -->
+    <section class="estado oculto" id="vScan">
+      <div class="cam">
+        <video id="scVideo" playsinline muted autoplay></video>
+        <canvas id="scMarco"></canvas>
+        <div class="cam-guia" aria-hidden="true"></div>
+      </div>
+      <p class="texto" id="scMsg">Apunta la cámara al QR de la tarjeta.</p>
+    </section>
+
+    <!-- Botón compartido: aparece en todos los estados -->
+    <button class="btn oculto" id="btnScan" type="button">Volver a escanear</button>
+    <button class="btn ghost oculto" id="btnCerrarScan" type="button">Cancelar</button>
+
+  </div>
+
+  <p class="pie">Verificación de credencial · No se muestran datos de contacto.</p>
+
+</main>
+
+<script src="cred.js"></script>
+</body>
+</html>
