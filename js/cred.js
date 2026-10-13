@@ -99,9 +99,14 @@ async function cargar(idForzado) {
   try {
     /* Se consulta aun sin código: así la página base también trae banner,
        logo y el nombre del candidato en vez de verse pelada. */
-    const url = `${API_URL}?action=qr.credencial&id=${encodeURIComponent(id)}&t=${Date.now()}`;
-    const res = await fetch(url, { method: 'GET' });
-    const json = await res.json();
+    /* 12/10/2026 · Fase 4: el viaje lo hace red.js (pieza común del
+       ecosistema): reintento seguro ante red caída o eco de Google, versión
+       del backend y medición. Una consulta vieja (otra tarjeta escaneada
+       encima) se descarta sola. */
+    let json;
+    try { json = await RED.pedir(API_URL, 'qr.credencial', { id: id }); }
+    catch (e) { if (e && e.cortado) return; throw e; }
+    if (id !== ultimoId) return;   // ya se escaneó otra tarjeta
     if (!json || !json.ok) throw new Error((json && json.error) || 'Respuesta inválida');
 
     const d = json.data || {};
@@ -150,12 +155,9 @@ function idDispositivo() {
 
 async function acceso(cuerpo) {
   const body = Object.assign({ dev: idDispositivo() }, cuerpo);
-  const res = await fetch(`${API_URL}?action=cred.acceso`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },  // evita el preflight de CORS
-    body: JSON.stringify(body)
-  });
-  const json = await res.json();
+  /* 12/10/2026 · Fase 4: por red.js (POST con rid: un reintento por red caída
+     nunca cuenta dos intentos de clave). */
+  const json = await RED.pedir(API_URL, 'cred.acceso', {}, { metodo: 'POST', cuerpo: body });
   if (!json || !json.ok) throw new Error((json && json.error) || 'Respuesta inválida');
   return json.data || {};
 }
@@ -412,3 +414,30 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && SC.
 window.addEventListener('pagehide', scanCerrar);
 
 cargar();
+
+/* ============================================================
+   VERSIÓN (12/10/2026 · Fase 4) — entrada instantánea con service worker.
+   La página se pinta desde la caché de su versión; aquí se pregunta
+   js/version.js a la red y, si hay una nueva, se avisa al SW y se recarga
+   UNA vez (nunca con la cámara abierta).
+   ============================================================ */
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+async function credVersion() {
+  try {
+    const r = await fetch('js/version.js?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) return;
+    const m = (await r.text()).match(/APP_VERSION\s*=\s*["']([^"']+)["']/);
+    const v = m ? m[1] : '';
+    if (!v || typeof APP_VERSION === 'undefined' || v === APP_VERSION) return;
+    if (!$('#vScan').classList.contains('oculto')) return;   // no se recarga con el escáner abierto
+    const k = nsKey('cred_recarga_' + v);
+    if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, '1');
+    const c = navigator.serviceWorker && navigator.serviceWorker.controller;
+    if (c) await new Promise(res => { const ch = new MessageChannel(); ch.port1.onmessage = () => res(); c.postMessage({ tipo: 'version', v: v }, [ch.port2]); setTimeout(res, 1500); });
+    location.reload();
+  } catch (e) {}
+}
+window.addEventListener('load', () => setTimeout(credVersion, 1200));
+document.addEventListener('visibilitychange', () => { if (!document.hidden) credVersion(); });
+/* red.js no recarga por versión nueva del CORE con la cámara abierta */
+window.RED_NO_RECARGAR = () => !$('#vScan').classList.contains('oculto') || !$('#vClave').classList.contains('oculto');
