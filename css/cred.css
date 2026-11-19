@@ -139,7 +139,7 @@ body{
 .sk-1{width:60%} .sk-2{width:82%;height:22px} .sk-3{width:40%}
 @keyframes sk{0%{background-position:100% 50%}100%{background-position:0 50%}}
 
-.pie{margin-top:14px;text-align:center;color:#B9C9E0;font-size:12.5px}
+.pie{text-wrap:pretty;margin-top:14px;text-align:center;color:#B9C9E0;font-size:12.5px}
 
 @media (prefers-color-scheme:dark){
   :root{--surface:#111A2B; --ink:#E8EEF7; --muted:#A9B6C8; --line:#22314A; --brand-050:#16243B; --brand-900:#E8EEF7; --brand-700:#7DB8FF}
